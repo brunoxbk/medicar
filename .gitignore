@@ -1,0 +1,17 @@
+venv
+*.pyc
+staticfiles
+.env
+.vscode
+*.sqlite3 
+ls
+*.xml
+*.idea
+*.jpg
+*.png
+*.jpeg
+*.ipynb
+*.jpeg
+*.log
+*.pdf
+media/*
