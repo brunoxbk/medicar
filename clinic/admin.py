@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Medico, Agenda, Especialidade, Hora
+from .models import Medico, Agenda, Especialidade, Consulta
+from .forms import AgendaForm
 
 
 class EspecialidadeAdmin(admin.ModelAdmin):
@@ -15,18 +16,19 @@ class MedicoAdmin(admin.ModelAdmin):
     exclude = ('apagado_em',)
 
 
-class HoraInline(admin.StackedInline):
-    model = Hora
+class ConsultaInline(admin.StackedInline):
+    model = Consulta
     exclude = ('apagado_em',)
     extra = 0
 
 
 class AgendaAdmin(admin.ModelAdmin):
+    form = AgendaForm
     list_display = ('id', 'dia', 'medico')
     list_filter = ('medico__especialidade', 'medico')
     search_fields = ('medico__nome',  'medico__especialidade__nome')
     exclude = ('apagado_em',)
-    inlines = [HoraInline, ]
+    inlines = [ConsultaInline, ]
 
 
 admin.site.register(Especialidade, EspecialidadeAdmin)

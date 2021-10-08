@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from .models import Especialidade, Medico, Agenda, Hora
+from .models import Especialidade, Medico, Agenda, Consulta
 from django.utils.timezone import now
 from datetime import datetime
+from django.db.models import Case, Value, When, OuterRef, CharField
 
 
 class EspecialidadeSerializer(serializers.ModelSerializer):
@@ -18,9 +19,9 @@ class MedicoSerializer(serializers.ModelSerializer):
         fields = ['id', 'nome', 'crm', 'especialidade']
 
 
-class HoraSerializer(serializers.ModelSerializer):
+class ConsultaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Hora
+        model = Consulta
         fields = ['order', 'title', 'duration']
 
 
@@ -28,10 +29,14 @@ class AgendaSerializer(serializers.ModelSerializer):
     horarios = serializers.SerializerMethodField()
 
     def get_horarios(self, obj):
-        # .filter(hora__gte=datetime.now().time())\
-        return obj.horarios_agendamento\
-            .filter(paciente__isnull=True)\
-            .values_list('hora', flat=True)
+
+        horarios = obj.consultas_agendamento\
+            .filter(paciente__isnull=True)
+
+        if obj.dia == now().date():
+            horarios = horarios.filter(hora__gt=datetime.now().time())
+
+        return horarios.values_list('hora', flat=True)
 
     class Meta:
         model = Agenda
@@ -45,11 +50,8 @@ class ConsultaListSerializer(serializers.ModelSerializer):
     def get_dia(self, obj):
         return obj.agenda.dia
 
-    # def get_medico(self, obj):
-    #     return MedicoSerializer(obj.agenda.medico)
-
     class Meta:
-        model = Hora
+        model = Consulta
         fields = ['id', 'hora', 'dia', 'medico']
 
 
@@ -58,19 +60,24 @@ class ConsultaCreateSerializer(serializers.ModelSerializer):
         input_formats=["%H:%M:%S", ])
 
     class Meta:
-        model = Hora
+        model = Consulta
         fields = ['hora', 'agenda']
 
     def validate(self, data):
-        hora = Hora.objects.filter(
-            hora=data['hora'], agenda=data['agenda'], paciente__isnull=True).last()
+
+        agenda = data['agenda']
+
+        if agenda.dia < datetime.now().date():
+            raise serializers.ValidationError("Agenda inválida")
+
+        hora = Consulta.objects.filter(
+            hora=data['hora'], agenda=agenda, paciente__isnull=True).last()
         if not hora:
             raise serializers.ValidationError("Horário inválido")
 
         return data
 
     def create(self, validated_data):
-        print(validated_data)
-        hora = Hora.objects.filter(
+        hora = Consulta.objects.filter(
             hora=validated_data['hora'], agenda=validated_data['agenda'], paciente__isnull=True).last()
         return hora

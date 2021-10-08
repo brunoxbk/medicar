@@ -77,15 +77,15 @@ class Agenda(SuperClass):
         related_name="agendas_medico")
 
     class Meta:
-        verbose_name = 'agendas'
+        verbose_name = 'agenda'
         verbose_name_plural = 'agendas'
         ordering = ('dia',)
 
     def __str__(self):
-        return str(self.pk)
+        return "Agenda %s" % (self.dia.strftime("%d/%m/%Y"))
 
 
-class Hora(SuperClass):
+class Consulta(SuperClass):
     class HourChoices(datetime.time, models.Choices):
         HOUR_08 = 8, 0, 0, '08:00'
         HOUR_09 = 9, 0, 0, '09:00'
@@ -95,26 +95,28 @@ class Hora(SuperClass):
         HOUR_15 = 15, 0, 0, '15:00'
         HOUR_16 = 16, 0, 0, '16:00'
         HOUR_17 = 17, 0, 0, '17:00'
+        HOUR_21 = 21, 0, 0, '21:00'
+        HOUR_22 = 22, 0, 0, '22:00'
 
     agenda = models.ForeignKey(
         Agenda, verbose_name='agenda',
-        on_delete=models.DO_NOTHING,
-        related_name="horarios_agendamento")
+        on_delete=models.CASCADE,
+        related_name="consultas_agendamento")
     hora = models.TimeField(
         'hora', choices=HourChoices.choices)
     paciente = models.ForeignKey(
         User, verbose_name='paciente',
-        on_delete=models.DO_NOTHING, null=True, blank=True,
-        related_name="agendamentos_paciente")
+        on_delete=models.CASCADE, null=True, blank=True,
+        related_name="consultas_paciente")
 
     @property
     def medico(self):
         return self.agenda.medico
 
     class Meta:
-        verbose_name = 'horário'
-        verbose_name_plural = 'horários'
+        verbose_name = 'consulta'
+        verbose_name_plural = 'consultas'
         ordering = ('hora',)
 
     def __str__(self):
-        return str(self.pk)
+        return "Consulta %s " % (self.hora.strftime("%H:%M"))
